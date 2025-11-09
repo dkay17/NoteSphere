@@ -490,7 +490,7 @@ This project is licensed under the MIT License - feel free to use it for learnin
 
 ## 👥 Authors
 
-- Your Name - Initial work
+- Marvin Idibia - Initial work
 
 ## 🙏 Acknowledgments
 
@@ -503,6 +503,43 @@ For issues, questions, or contributions:
 - Open an issue on GitHub
 - Check `SETUP_GUIDE.md` for detailed instructions
 - Review `FIXES_APPLIED.md` for recent fixes
+
+## 📸 Project Preview
+
+### 🖼️ Screenshots
+<p align="center">
+  <img src="./media/note 1.png" alt="NoteSphere Home Page" width="700"/>
+  <br/>
+  <em>NoteSphere - Home Page Interface</em>
+</p>
+
+<p align="center">
+  <img src="./media/note 2.png" alt="NoteSphere Dashboard" width="700"/>
+  <br/>
+  <em>NoteSphere - User Dashboard View</em>
+</p>
+
+<p align="center">
+  <img src="./media/note 3.png" alt="NoteSphere Dashboard" width="700"/>
+  <br/>
+  <em>NoteSphere - Browse note View</em>
+</p>
+
+<p align="center">
+  <img src="./media/note 4.png" alt="NoteSphere Dashboard" width="700"/>
+  <br/>
+  <em>NoteSphere - Admin Dashboard View</em>
+</p>
+
+---
+
+### 🎬 Demo Video
+<p align="center">
+  <video src="./media/NoteSphere video.mp4" controls width="700"></video>
+  <br/>
+  <em>Watch the full NoteSphere demo</em>
+</p>
+
 
 ---
 
