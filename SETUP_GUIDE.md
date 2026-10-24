@@ -3,24 +3,13 @@
 ## 🚀 Quick Start Guide
 
 ### Prerequisites
-- Node.js v16+ installed
-- MySQL v8+ installed and running
+- Node.js v24+ installed
+- A PostgreSQL 15+ database (local or hosted)
 - Git (optional)
 
 ### Step 1: Database Setup
 
-1. **Start MySQL** (if not already running)
-2. **Create the database:**
-
-```sql
-CREATE DATABASE notesphere_db;
-```
-
-3. **Verify database exists:**
-
-```sql
-SHOW DATABASES;
-```
+Create a PostgreSQL database. For Vercel projects, use a provider available through the Vercel Marketplace (for example, Neon); Vercel's former built-in Postgres product is no longer available.
 
 ### Step 2: Environment Configuration
 
@@ -33,32 +22,21 @@ Copy-Item .env.example .env
 # Or manually create .env file in the root directory
 ```
 
-2. **Update `.env` with your MySQL credentials:**
+2. **Set the PostgreSQL connection URLs and API secret in `.env`:**
 
 ```env
-# Database Configuration
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=YOUR_MYSQL_PASSWORD_HERE
-DB_NAME=notesphere_db
-DB_PORT=3300
+DATABASE_URL=postgresql://...pooled-url...
+DIRECT_URL=postgresql://...direct-url...
 
-# JWT Secret (change this to a random string)
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
+JWT_SECRET=replace_with_a_long_random_secret
 
-# Server Configuration
 PORT=5000
 NODE_ENV=development
-
-# Frontend URL (for CORS)
 CLIENT_URL=http://localhost:3000
-
-# File Upload Configuration
 MAX_FILE_SIZE=10485760
-UPLOAD_PATH=./uploads/notes
 ```
 
-**Important:** Replace `YOUR_MYSQL_PASSWORD_HERE` with your actual MySQL password!
+Do not commit connection URLs or secrets. `MYSQL_DATABASE_URL` is only required when importing legacy records.
 
 ### Step 3: Install Dependencies
 
@@ -78,13 +56,23 @@ npm install
 cd ../..
 ```
 
-### Step 4: Seed the Database (Optional but Recommended)
+### Step 4: Initialize the PostgreSQL schema
 
-This creates test users and sample notes:
+From the repository root, emit the Prisma 8 contract and initialize the schema:
 
 ```bash
-cd server
-npm run seed
+npm run contract:emit
+npm run db:init
+```
+
+If you are migrating legacy MySQL records, back up both databases and follow [DATABASE_SWITCH_GUIDE.md](./DATABASE_SWITCH_GUIDE.md) before seeding.
+
+### Step 5: Seed an empty development database (Optional)
+
+The seed command only runs outside production and refuses to seed a non-empty database:
+
+```bash
+npm --prefix server run seed
 ```
 
 **Demo accounts created:**
@@ -92,7 +80,7 @@ npm run seed
 - Premium Student: `student1@example.com` / `password123`
 - Free Student: `student3@example.com` / `password123`
 
-### Step 5: Run the Application
+### Step 6: Run the Application
 
 From the **root directory**:
 
@@ -114,7 +102,7 @@ npm run server
 npm run client
 ```
 
-### Step 6: Test the Application
+### Step 7: Test the Application
 
 1. Open browser to http://localhost:3000
 2. Click "Login" and use demo credentials
@@ -128,10 +116,9 @@ npm run client
 ### Error: "Cannot connect to database"
 
 **Solution:**
-1. Verify MySQL is running
-2. Check `.env` file has correct credentials
-3. Ensure database `notesphere_db` exists
-4. Check port 3300 (or 3306) is correct
+1. Verify `DATABASE_URL` is the provider's PostgreSQL pooled URL.
+2. Verify `DIRECT_URL` is set for Prisma schema commands.
+3. Ensure the backend host can reach the PostgreSQL database.
 
 ### Error: "Port 5000 already in use"
 
@@ -184,11 +171,6 @@ NoteSphere/
 ├── server/                     # Backend
 │   ├── config/
 │   │   └── database.js        # Database connection
-│   ├── models/
-│   │   ├── User.js            # User model
-│   │   ├── Note.js            # Note model
-│   │   ├── DownloadLog.js     # Download tracking
-│   │   └── index.js           # Model associations
 │   ├── controllers/
 │   │   ├── authController.js  # Auth logic
 │   │   ├── noteController.js  # Note logic
@@ -202,6 +184,9 @@ NoteSphere/
 │   │   └── upload.js          # File upload (Multer)
 │   ├── seeders/
 │   │   └── seed.js            # Database seeder
+│   ├── scripts/
+│   │   ├── createAdmin.js
+│   │   └── importMysqlData.js # One-time legacy data importer
 │   ├── uploads/               # File storage (auto-created)
 │   ├── server.js              # Entry point
 │   └── package.json
@@ -241,6 +226,8 @@ NoteSphere/
     ├── postcss.config.js
     └── package.json
 ```
+
+The Prisma 8 contract and generated runtime files are in `src/prisma/` at the repository root.
 
 ---
 
@@ -298,9 +285,8 @@ Update `.env` for production:
 
 ```env
 NODE_ENV=production
-DB_HOST=your_production_db_host
-DB_USER=your_production_db_user
-DB_PASSWORD=your_production_db_password
+DATABASE_URL=your-pooled-postgresql-url
+DIRECT_URL=your-direct-postgresql-url
 JWT_SECRET=use_a_very_strong_random_string_here
 CLIENT_URL=https://your-frontend-domain.com
 ```
@@ -320,9 +306,10 @@ CLIENT_URL=https://your-frontend-domain.com
 3. Set start command: `cd server && npm start`
 4. Add all environment variables from `.env`
 
-**Database (PlanetScale/Neon):**
-1. Create production MySQL database
-2. Update `DB_HOST`, `DB_USER`, `DB_PASSWORD` in production environment
+**Database (Vercel Marketplace Postgres):**
+1. Provision a PostgreSQL database through a provider such as Neon.
+2. Set `DATABASE_URL` (pooled) and `DIRECT_URL` (direct) in the backend environment.
+3. Apply reviewed Prisma 8 schema migrations before deploying.
 
 ---
 
@@ -332,7 +319,7 @@ If you encounter issues:
 
 1. Check this guide first
 2. Verify all environment variables are set correctly
-3. Ensure MySQL is running and accessible
+3. Ensure PostgreSQL is reachable and the Prisma schema has been initialized
 4. Check console logs for error messages
 5. Try restarting the development servers
 
@@ -342,9 +329,9 @@ If you encounter issues:
 
 - [React Documentation](https://react.dev)
 - [Express.js Guide](https://expressjs.com)
-- [Sequelize ORM](https://sequelize.org)
+- [Prisma ORM](https://www.prisma.io/docs)
 - [Tailwind CSS](https://tailwindcss.com)
-- [MySQL Documentation](https://dev.mysql.com/doc/)
+- [PostgreSQL Documentation](https://www.postgresql.org/docs/)
 
 ---
 

@@ -1,37 +1,25 @@
-const { Sequelize } = require('sequelize');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME || 'notesphere_db',
-  process.env.DB_USER || 'root',
-  process.env.DB_PASSWORD || '',
-  {
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    dialect: 'mysql',
-    logging: false,
-    pool: {
-      max: 5,
-      min: 0,
-      acquire: 30000,
-      idle: 10000
-    }
-  }
-);
+let dbPromise;
 
-const connectDB = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('✅ MySQL Database connected successfully');
-    
-    // Sync all models
-    await sequelize.sync({ alter: true });
-    console.log('✅ Database models synchronized');
-  } catch (error) {
-    console.error('❌ Unable to connect to database:', error.message);
-    process.exit(1);
+const getDb = () => {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL must be set to connect to PostgreSQL');
   }
+
+  if (!dbPromise) {
+    dbPromise = import('../../src/prisma/db.ts').then(({ db }) => db);
+  }
+
+  return dbPromise;
 };
 
-module.exports = { sequelize, connectDB };
+const connectDB = async () => {
+  const db = await getDb();
+  await db.orm.public.User.select('id').limit(1).all();
+  console.log('✅ PostgreSQL database connected successfully');
+  return db;
+};
+
+module.exports = { getDb, connectDB };

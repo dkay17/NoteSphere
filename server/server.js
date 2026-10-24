@@ -10,9 +10,6 @@ const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
-// Connect to database
-connectDB();
-
 // Middleware
 // Allow requests from web client, mobile app, and local network
 const allowedOrigins = [
@@ -83,7 +80,15 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+const start = async () => {
+  await connectDB();
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+};
+
+start().catch((error) => {
+  console.error('Unable to start server:', error);
+  process.exitCode = 1;
 });

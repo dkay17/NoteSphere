@@ -1,0 +1,51 @@
+{
+  "name": "my-app",
+  "private": true,
+  "packageManager": "npm@11.6.0",
+  "type": "module",
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "composer:deploy": "prisma deploy module.ts",
+    "composer:dev": "prisma dev module.ts",
+    "contract:emit": "prisma contract emit",
+    "db:init": "prisma db init",
+    "db:update": "prisma db update",
+    "db:verify": "prisma db verify",
+    "deploy": "npm run build && npm run composer:deploy",
+    "dev": "tsx watch src/index.ts",
+    "dev:composer": "npm run build && npm run composer:dev",
+    "migrate": "prisma db migrate",
+    "migration:plan": "prisma migration plan",
+    "migration:show": "prisma migration show",
+    "migration:status": "prisma migration status",
+    "skills:sync": "prisma skills sync || exit 0",
+    "start": "node dist/server.mjs"
+  },
+  "dependencies": {
+    "@prisma/composer": "0.24.0",
+    "@prisma/composer-prisma-cloud": "0.24.0",
+    "@prisma/orm-postgres": "8.0.0-rc.12",
+    "alchemy": "2.0.0-beta.78",
+    "temporal-polyfill": "^1.0.4"
+  },
+  "devDependencies": {
+    "@prisma/dev": "0.25.2",
+    "@types/node": "^25.6.2",
+    "prisma": "8.0.0-rc.18",
+    "tsdown": "^0.22.14",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "effect": "4.0.0-rc.115",
+    "@effect/platform-bun": "4.0.0-rc.115",
+    "@effect/platform-node": "4.0.0-rc.115",
+    "@effect/platform-node-shared": "4.0.0-rc.115",
+    "@effect/sql-d1": "4.0.0-rc.115",
+    "@effect/sql-sqlite-do": "4.0.0-rc.115",
+    "@effect/vitest": "4.0.0-rc.115"
+  }
+}

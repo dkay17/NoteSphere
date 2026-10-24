@@ -1,0 +1,72 @@
+// use prisma-8
+
+model User {
+  id                 Int           @id @default(autoincrement())
+  name               String
+  email              String        @unique
+  password           String
+  institution        String
+  level              String
+  role               String        @default("student")
+  isPremium          Boolean       @default(false)
+  subscriptionExpiry DateTime?
+  bio                String?
+  isActive           Boolean       @default(true)
+  weeklyDownloads    Int           @default(0)
+  lastDownloadReset  DateTime      @default(now())
+  createdAt          DateTime      @default(now())
+  updatedAt          temporal.updatedAt()
+  notes              Note[]
+  downloadLogs       DownloadLog[]
+
+  @@index([institution])
+  @@index([role])
+  @@map("Users")
+}
+
+model Note {
+  id          Int           @id @default(autoincrement())
+  title       String
+  course      String
+  courseCode  String?
+  lecturer    String?
+  institution String
+  fileUrl     String
+  fileName    String
+  fileSize    Int
+  fileType    String
+  uploaderId  Int
+  tags        String?
+  description String?
+  summary     String?
+  downloads   Int           @default(0)
+  verified    Boolean       @default(false)
+  rating      Float         @default(0)
+  ratingCount Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   temporal.updatedAt()
+  uploader    User          @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  downloadLogs DownloadLog[]
+
+  @@index([institution])
+  @@index([uploaderId])
+  @@index([createdAt])
+  @@map("Notes")
+}
+
+model DownloadLog {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  noteId       Int
+  downloadDate DateTime @default(now())
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+  updatedAt    temporal.updatedAt()
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note         Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([noteId])
+  @@index([downloadDate])
+  @@map("DownloadLogs")
+}

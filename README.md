@@ -4,8 +4,8 @@ A comprehensive full-stack platform for students to share and access academic ma
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Node](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen)
-![MySQL](https://img.shields.io/badge/MySQL-8.0+-orange)
+![Node](https://img.shields.io/badge/node-%3E%3D24-brightgreen)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-blue)
 
 ## ✨ Features
 
@@ -59,8 +59,8 @@ A comprehensive full-stack platform for students to share and access academic ma
 ### Backend
 - **Node.js** - Runtime environment
 - **Express 5.1.0** - Web framework
-- **MySQL 8.0+** - Database
-- **Sequelize 6.37.7** - ORM for database operations
+- **PostgreSQL** - Database
+- **Prisma ORM 8 contract runtime** - Data contract and PostgreSQL access (release candidate)
 - **JWT (jsonwebtoken 9.0.2)** - Authentication tokens
 - **bcryptjs 3.0.2** - Password hashing
 - **Multer 2.0.2** - File upload handling
@@ -71,8 +71,8 @@ A comprehensive full-stack platform for students to share and access academic ma
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** (v16.0.0 or higher)
-- **MySQL** (v8.0 or higher)
+- **Node.js** (v24 or higher)
+- **PostgreSQL 15 or higher** (local or hosted, such as a Vercel Marketplace provider)
 - **npm** or **yarn** package manager
 - **Git** (optional, for version control)
 
@@ -110,17 +110,7 @@ npm install
 
 ### Step 3: Database Setup
 
-1. **Create MySQL Database**:
-
-```sql
-CREATE DATABASE notesphere_db;
-```
-
-2. **Verify database exists**:
-
-```sql
-SHOW DATABASES;
-```
+Create a PostgreSQL database with your provider. Vercel no longer provides its former built-in Postgres service; use a Marketplace provider such as Neon. Configure `DATABASE_URL` to the provider's pooled connection URL and `DIRECT_URL` to its direct/unpooled URL.
 
 ### Step 4: Environment Configuration
 
@@ -136,12 +126,14 @@ Copy-Item .env.example .env
 2. **Configure your `.env` file**:
 
 ```env
-# Database Configuration
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=YOUR_MYSQL_PASSWORD_HERE
-DB_NAME=notesphere_db
-DB_PORT=3306
+# Pooled PostgreSQL URL used by the API
+DATABASE_URL=postgresql://...
+
+# Direct PostgreSQL URL used by Prisma schema commands
+DIRECT_URL=postgresql://...
+
+# Only needed to import the legacy MySQL database
+MYSQL_DATABASE_URL=mysql://...
 
 # JWT Secret (use a strong random string)
 JWT_SECRET=your_super_secret_jwt_key_change_in_production
@@ -155,21 +147,25 @@ CLIENT_URL=http://localhost:3000
 MAX_FILE_SIZE=10485760
 ```
 
-**⚠️ Important**: Replace `YOUR_MYSQL_PASSWORD_HERE` with your actual MySQL password!
+Keep database URLs private and out of source control. `MYSQL_DATABASE_URL` is only needed when importing existing MySQL records.
 
-### Step 5: Seed the Database
+### Step 5: Initialize PostgreSQL and migrate existing data
 
-Populate the database with sample data:
+Emit the Prisma 8 contract and initialize the empty PostgreSQL schema:
 
 ```bash
-cd server
-npm run seed
+npm run contract:emit
+npm run db:init
 ```
 
-This creates:
-- ✅ 1 Admin user (admin@notesphere.com / admin123)
-- ✅ 5 Test students (2 premium, 3 free)
-- ✅ 10 Sample notes
+To copy records from the legacy MySQL database, back up both databases, set `MYSQL_DATABASE_URL`, review counts, then run:
+
+```bash
+npm run data:import:mysql
+npm run data:import:mysql -- --apply
+```
+
+The importer writes only to empty PostgreSQL tables and does not modify MySQL. To seed a new, empty development database instead, run `npm --prefix server run seed`.
 
 ### Step 6: Start the Application
 
@@ -275,12 +271,7 @@ NoteSphere/
 └── server/                   # Express backend
     ├── config/
     │   └── database.js       # Database connection
-    ├── models/               # Sequelize models
-    │   ├── User.js
-    │   ├── Note.js
-    │   ├── DownloadLog.js
-    │   └── index.js          # Model associations
-    ├── controllers/          # Route controllers
+    ├── controllers/          # Prisma 8-backed API controllers
     │   ├── authController.js
     │   ├── noteController.js
     │   └── adminController.js
@@ -294,11 +285,18 @@ NoteSphere/
     ├── seeders/               # Database seeders
     │   └── seed.js
     ├── scripts/               # Utility scripts
-    │   └── createAdmin.js    # Admin creation script
+    │   ├── createAdmin.js    # Admin creation script
+    │   └── importMysqlData.js # One-time legacy data importer
     ├── uploads/               # File storage (auto-created)
     │   └── notes/
     ├── server.js             # Entry point
     └── package.json
+
+└── src/prisma/               # Prisma 8 data contract and runtime
+    ├── contract.prisma
+    ├── contract.json         # Generated; do not edit
+    ├── contract.d.ts         # Generated; do not edit
+    └── db.ts
 ```
 
 ## 🔌 API Endpoints
@@ -349,6 +347,11 @@ npm run dev          # Start both client and server concurrently
 npm run server       # Start only the backend server
 npm run client       # Start only the frontend client
 npm run install-all  # Install dependencies for root, server, and client
+npm run contract:emit # Generate Prisma 8 contract metadata
+npm run db:init      # Initialize the PostgreSQL schema
+npm run migration:plan # Plan a reviewed schema migration
+npm run db:migrate   # Apply a reviewed schema migration
+npm run data:import:mysql # Dry-run legacy MySQL import; add -- --apply to write
 ```
 
 ### Server Directory
@@ -356,7 +359,7 @@ npm run install-all  # Install dependencies for root, server, and client
 ```bash
 npm start            # Start production server
 npm run dev          # Start development server with nodemon
-npm run seed         # Seed database with sample data
+npm --prefix server run seed # Seed an empty development database
 npm run create-admin # Create new admin user
 ```
 
@@ -404,7 +407,7 @@ npm test             # Run tests
 - ✅ **File Type Validation**: Only allowed file types accepted
 - ✅ **File Size Limits**: Prevents oversized uploads
 - ✅ **CORS Protection**: Configured CORS for security
-- ✅ **SQL Injection Protection**: Sequelize ORM prevents SQL injection
+- ✅ **SQL Injection Protection**: Prisma 8 parameterizes database queries
 - ✅ **Input Validation**: Email validation and required field checks
 
 ## 🚢 Deployment
@@ -434,19 +437,18 @@ REACT_APP_API_URL=https://your-backend-url.com/api
    - CLIENT_URL (your frontend URL)
    - PORT (usually set automatically)
 
-### Database (PlanetScale/Neon)
+### Database (Vercel Marketplace Postgres)
 
-1. Create production MySQL database
-2. Update connection string in production environment
-3. Run migrations (Sequelize sync)
+1. Provision a PostgreSQL database through a Vercel Marketplace provider such as Neon.
+2. Set `DATABASE_URL` to its pooled URL and `DIRECT_URL` to its direct/unpooled URL in the backend environment.
+3. Apply reviewed Prisma 8 schema migrations before deploying the API. The API does not alter the schema on startup.
 
 ## 🐛 Troubleshooting
 
 ### "Cannot connect to database"
-- ✅ Verify MySQL is running
-- ✅ Check `.env` file has correct credentials
-- ✅ Ensure database `notesphere_db` exists
-- ✅ Verify port (3306 or 3300) is correct
+- ✅ Check that `DATABASE_URL` is set to the PostgreSQL pooled URL.
+- ✅ Check that `DIRECT_URL` is set for schema-management commands.
+- ✅ Confirm the database is reachable from the backend host.
 
 ### "Port already in use"
 - ✅ Change `PORT` in `.env` file

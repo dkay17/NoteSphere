@@ -1,11 +1,19 @@
-const { Note, User, DownloadLog } = require('../models');
-const { Op } = require('sequelize');
 const path = require('path');
 const fs = require('fs');
+const { getDb } = require('../config/database');
 
-// @desc    Upload new note
-// @route   POST /api/notes/upload
-// @access  Private
+const parseId = (value) => {
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+};
+
+const parsePage = (value, fallback, maximum) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0
+    ? Math.min(parsed, maximum)
+    : fallback;
+};
+
 const uploadNote = async (req, res) => {
   try {
     const { title, course, courseCode, lecturer, institution, tags, description } = req.body;
@@ -13,13 +21,12 @@ const uploadNote = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: 'Please upload a file' });
     }
-
     if (!title || !course || !institution) {
       return res.status(400).json({ message: 'Please provide title, course, and institution' });
     }
 
-    // Create note
-    const note = await Note.create({
+    const db = await getDb();
+    const note = await db.orm.public.Note.create({
       title,
       course,
       courseCode: courseCode || null,
@@ -31,10 +38,10 @@ const uploadNote = async (req, res) => {
       fileType: path.extname(req.file.originalname).toLowerCase(),
       uploaderId: req.user.id,
       tags: tags || null,
-      description: description || null
+      description: description || null,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Note uploaded successfully',
       note: {
         id: note.id,
@@ -42,250 +49,247 @@ const uploadNote = async (req, res) => {
         course: note.course,
         institution: note.institution,
         fileName: note.fileName,
-        verified: note.verified
-      }
+        verified: note.verified,
+      },
     });
   } catch (error) {
     console.error('Upload note error:', error);
-    res.status(500).json({ message: 'Server error during upload' });
+    return res.status(500).json({ message: 'Server error during upload' });
   }
 };
 
-// @desc    Get all notes with filters
-// @route   GET /api/notes
-// @access  Public
 const getNotes = async (req, res) => {
   try {
-    const { 
-      search, 
-      institution, 
-      course, 
-      lecturer, 
-      tags, 
+    const {
+      search,
+      institution,
+      course,
+      lecturer,
+      tags,
       sortBy = 'createdAt',
       order = 'DESC',
-      page = 1,
-      limit = 20
     } = req.query;
+    const page = parsePage(req.query.page, 1, Number.MAX_SAFE_INTEGER);
+    const limit = parsePage(req.query.limit, 20, 100);
+    const db = await getDb();
+    let filtered = db.orm.public.Note;
 
-    const where = {};
-
-    // Search filter
-    if (search) {
-      where[Op.or] = [
-        { title: { [Op.like]: `%${search}%` } },
-        { course: { [Op.like]: `%${search}%` } },
-        { courseCode: { [Op.like]: `%${search}%` } },
-        { description: { [Op.like]: `%${search}%` } }
-      ];
+    if (typeof search === 'string' && search.trim()) {
+      const { or } = await import('@prisma/orm-postgres/orm-client');
+      const term = `%${search.trim()}%`;
+      filtered = filtered.where((note) =>
+        or(
+          note.title.ilike(term),
+          note.course.ilike(term),
+          note.courseCode.ilike(term),
+          note.description.ilike(term),
+        ),
+      );
+    }
+    if (typeof institution === 'string' && institution) {
+      filtered = filtered.where((note) => note.institution.ilike(`%${institution}%`));
+    }
+    if (typeof course === 'string' && course) {
+      filtered = filtered.where((note) => note.course.ilike(`%${course}%`));
+    }
+    if (typeof lecturer === 'string' && lecturer) {
+      filtered = filtered.where((note) => note.lecturer.ilike(`%${lecturer}%`));
+    }
+    if (typeof tags === 'string' && tags) {
+      filtered = filtered.where((note) => note.tags.ilike(`%${tags}%`));
     }
 
-    // Institution filter
-    if (institution) {
-      where.institution = { [Op.like]: `%${institution}%` };
-    }
+    const allowedSorts = ['createdAt', 'downloads', 'rating'];
+    const safeSort = allowedSorts.includes(sortBy) ? sortBy : 'createdAt';
+    const direction = String(order).toLowerCase() === 'asc' ? 'asc' : 'desc';
+    const total = await filtered.aggregate((aggregate) => ({
+      count: aggregate.count(),
+    }));
+    const notes = await filtered
+      .include('uploader', (uploader) => uploader.select('id', 'name', 'institution'))
+      .orderBy((note) => note[safeSort][direction]())
+      .limit(limit)
+      .offset((page - 1) * limit)
+      .all();
 
-    // Course filter
-    if (course) {
-      where.course = { [Op.like]: `%${course}%` };
-    }
-
-    // Lecturer filter
-    if (lecturer) {
-      where.lecturer = { [Op.like]: `%${lecturer}%` };
-    }
-
-    // Tags filter
-    if (tags) {
-      where.tags = { [Op.like]: `%${tags}%` };
-    }
-
-    // Pagination
-    const offset = (page - 1) * limit;
-
-    // Sorting options
-    let orderClause = [[sortBy, order]];
-    if (sortBy === 'downloads') {
-      orderClause = [['downloads', 'DESC']];
-    } else if (sortBy === 'rating') {
-      orderClause = [['rating', 'DESC']];
-    }
-
-    const { count, rows } = await Note.findAndCountAll({
-      where,
-      include: [
-        {
-          association: 'uploader',
-          attributes: ['id', 'name', 'institution']
-        }
-      ],
-      order: orderClause,
-      limit: parseInt(limit),
-      offset: parseInt(offset)
-    });
-
-    res.json({
-      notes: rows,
-      totalPages: Math.ceil(count / limit),
-      currentPage: parseInt(page),
-      totalNotes: count
+    return res.json({
+      notes,
+      totalPages: Math.ceil(total.count / limit),
+      currentPage: page,
+      totalNotes: total.count,
     });
   } catch (error) {
     console.error('Get notes error:', error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
-// @desc    Get single note by ID
-// @route   GET /api/notes/:id
-// @access  Public
 const getNoteById = async (req, res) => {
   try {
-    const note = await Note.findByPk(req.params.id, {
-      include: [
-        {
-          association: 'uploader',
-          attributes: ['id', 'name', 'institution', 'level']
-        }
-      ]
-    });
+    const id = parseId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ message: 'Invalid note ID' });
+    }
+
+    const db = await getDb();
+    const note = await db.orm.public.Note
+      .where({ id })
+      .include('uploader', (uploader) =>
+        uploader.select('id', 'name', 'institution', 'level'),
+      )
+      .first();
 
     if (!note) {
       return res.status(404).json({ message: 'Note not found' });
     }
-
-    res.json(note);
+    return res.json(note);
   } catch (error) {
     console.error('Get note error:', error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
-// @desc    Download note
-// @route   GET /api/notes/download/:id
-// @access  Private
 const downloadNote = async (req, res) => {
   try {
-    const note = await Note.findByPk(req.params.id);
-
-    if (!note) {
-      return res.status(404).json({ message: 'Note not found' });
+    const id = parseId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ message: 'Invalid note ID' });
     }
 
-    // Check download limits for free users
-    if (!req.user.isPremium && req.user.role !== 'admin') {
-      await req.user.resetWeeklyDownloads();
-      
-      if (req.user.weeklyDownloads >= 3) {
-        return res.status(403).json({ 
-          message: 'Weekly download limit reached. Upgrade to premium for unlimited downloads.',
-          limitReached: true
+    const db = await getDb();
+    const outcome = await db.transaction(async (tx) => {
+      const user = await tx.orm.public.User
+        .where({ id: req.user.id })
+        .select('id', 'role', 'isPremium', 'weeklyDownloads', 'lastDownloadReset')
+        .first();
+      if (!user) {
+        return { kind: 'user-missing' };
+      }
+
+      const lastReset = new Date(user.lastDownloadReset.toString());
+      const resetDue = Date.now() - lastReset.getTime() >= 7 * 24 * 60 * 60 * 1000;
+      let weeklyDownloads = resetDue ? 0 : user.weeklyDownloads;
+      if (resetDue) {
+        await tx.orm.public.User.where({ id: user.id }).update({
+          weeklyDownloads: 0,
+          lastDownloadReset: Temporal.Instant.from(new Date().toISOString()),
         });
       }
-    }
 
-    // Check if file exists
-    if (!fs.existsSync(note.fileUrl)) {
+      const isFreeUser = !user.isPremium && user.role !== 'admin';
+      if (isFreeUser && weeklyDownloads >= 3) {
+        return { kind: 'limit-reached' };
+      }
+
+      const note = await tx.orm.public.Note.where({ id }).first();
+      if (!note) {
+        return { kind: 'note-missing' };
+      }
+      if (!fs.existsSync(note.fileUrl)) {
+        return { kind: 'file-missing' };
+      }
+
+      await tx.orm.public.Note.where({ id }).update({
+        downloads: note.downloads + 1,
+      });
+      await tx.orm.public.DownloadLog.create({
+        userId: user.id,
+        noteId: note.id,
+        ipAddress: req.ip || null,
+      });
+      if (isFreeUser) {
+        weeklyDownloads += 1;
+        await tx.orm.public.User.where({ id: user.id }).update({ weeklyDownloads });
+      }
+
+      return { kind: 'ready', fileUrl: note.fileUrl, fileName: note.fileName };
+    });
+
+    if (outcome.kind === 'user-missing') {
+      return res.status(401).json({ message: 'User not found' });
+    }
+    if (outcome.kind === 'limit-reached') {
+      return res.status(403).json({
+        message: 'Weekly download limit reached. Upgrade to premium for unlimited downloads.',
+        limitReached: true,
+      });
+    }
+    if (outcome.kind === 'note-missing') {
+      return res.status(404).json({ message: 'Note not found' });
+    }
+    if (outcome.kind === 'file-missing') {
       return res.status(404).json({ message: 'File not found on server' });
     }
 
-    // Increment downloads
-    await note.incrementDownloads();
-
-    // Log download
-    await DownloadLog.create({
-      userId: req.user.id,
-      noteId: note.id,
-      ipAddress: req.ip
-    });
-
-    // Increment user's weekly downloads
-    if (!req.user.isPremium && req.user.role !== 'admin') {
-      req.user.weeklyDownloads += 1;
-      await req.user.save();
-    }
-
-    // Send file
-    res.download(note.fileUrl, note.fileName);
+    return res.download(outcome.fileUrl, outcome.fileName);
   } catch (error) {
     console.error('Download note error:', error);
-    res.status(500).json({ message: 'Server error during download' });
+    return res.status(500).json({ message: 'Server error during download' });
   }
 };
 
-// @desc    Get user's uploaded notes
-// @route   GET /api/notes/my-notes
-// @access  Private
 const getMyNotes = async (req, res) => {
   try {
-    const notes = await Note.findAll({
-      where: { uploaderId: req.user.id },
-      order: [['createdAt', 'DESC']]
-    });
-
-    res.json(notes);
+    const db = await getDb();
+    const notes = await db.orm.public.Note
+      .where({ uploaderId: req.user.id })
+      .orderBy((note) => note.createdAt.desc())
+      .all();
+    return res.json(notes);
   } catch (error) {
     console.error('Get my notes error:', error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
-// @desc    Delete note
-// @route   DELETE /api/notes/:id
-// @access  Private (Owner or Admin)
 const deleteNote = async (req, res) => {
   try {
-    const note = await Note.findByPk(req.params.id);
+    const id = parseId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ message: 'Invalid note ID' });
+    }
 
+    const db = await getDb();
+    const note = await db.orm.public.Note.where({ id }).first();
     if (!note) {
       return res.status(404).json({ message: 'Note not found' });
     }
-
-    // Check ownership or admin
     if (note.uploaderId !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Not authorized to delete this note' });
     }
 
-    // Delete file from filesystem
+    await db.orm.public.Note.where({ id }).delete();
     if (fs.existsSync(note.fileUrl)) {
       fs.unlinkSync(note.fileUrl);
     }
-
-    await note.destroy();
-
-    res.json({ message: 'Note deleted successfully' });
+    return res.json({ message: 'Note deleted successfully' });
   } catch (error) {
     console.error('Delete note error:', error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
-// @desc    Generate AI summary (placeholder)
-// @route   POST /api/notes/:id/summary
-// @access  Private (Premium)
 const generateSummary = async (req, res) => {
   try {
-    const note = await Note.findByPk(req.params.id);
+    const id = parseId(req.params.id);
+    if (!id) {
+      return res.status(400).json({ message: 'Invalid note ID' });
+    }
 
+    const db = await getDb();
+    const note = await db.orm.public.Note.where({ id }).first();
     if (!note) {
       return res.status(404).json({ message: 'Note not found' });
     }
 
-    // Mock AI summary generation
-    const mockSummary = `This is a comprehensive summary of ${note.title} for ${note.course}. 
+    const summary = `This is a comprehensive summary of ${note.title} for ${note.course}.
     The document covers key concepts and important topics relevant to ${note.institution} students. 
     Main topics include: fundamental principles, practical applications, and exam preparation materials.`;
-
-    note.summary = mockSummary;
-    await note.save();
-
-    res.json({
-      message: 'Summary generated successfully',
-      summary: mockSummary
-    });
+    await db.orm.public.Note.where({ id }).update({ summary });
+    return res.json({ message: 'Summary generated successfully', summary });
   } catch (error) {
     console.error('Generate summary error:', error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -296,5 +300,5 @@ module.exports = {
   downloadNote,
   getMyNotes,
   deleteNote,
-  generateSummary
+  generateSummary,
 };

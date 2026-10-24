@@ -1,27 +1,29 @@
 # 🚀 START HERE - NoteSphere Quick Start
 
-## ⚡ 3-Minute Setup
+## ⚡ Quick Setup
 
-### Step 1: Create Database (1 minute)
-```sql
-CREATE DATABASE notesphere_db;
-```
+### Step 1: Create a PostgreSQL database
+Use a local PostgreSQL instance or a provider such as Neon through the Vercel Marketplace.
 
 ### Step 2: Configure Environment (1 minute)
 ```bash
 # Copy the example file
 Copy-Item .env.example .env
 
-# Edit .env and change:
-# DB_PASSWORD=YOUR_MYSQL_PASSWORD_HERE
+# Edit .env and set:
+# DATABASE_URL=your pooled PostgreSQL URL
+# DIRECT_URL=your direct PostgreSQL URL
 ```
 
-### Step 3: Seed & Run (1 minute)
+### Step 3: Initialize and run
+
 ```bash
-# Seed database
-cd server
-npm run seed
-cd ..
+# Emit the Prisma 8 contract and initialize PostgreSQL
+npm run contract:emit
+npm run db:init
+
+# Optional: seed a new, empty development database
+npm --prefix server run seed
 
 # Start the app
 npm run dev
@@ -32,6 +34,8 @@ npm run dev
 ---
 
 ## 🔑 Demo Login
+
+The demo accounts are available only after running the optional development seed above. The seed refuses to run in production or against a non-empty database.
 
 **Admin:**
 - Email: `admin@notesphere.com`
@@ -46,9 +50,7 @@ npm run dev
 ## ❓ Having Issues?
 
 ### "Cannot connect to database"
-- Check MySQL is running
-- Verify `.env` has correct password
-- Confirm port is 3300 (or 3306)
+- Verify `DATABASE_URL` and `DIRECT_URL` are correct and reachable.
 
 ### "Port already in use"
 - Change PORT in `.env` file

@@ -21,7 +21,13 @@ export default {
     },
     web: { favicon: "./assets/favicon.png" },
     extra: {
-      apiUrl: process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000/api"
-    }
+      apiUrl: process.env.EXPO_PUBLIC_API_URL || "https://notesphere-xr3r.onrender.com/api",
+      eas: {
+        "projectId": "bebe0c1f-e892-43bf-ac78-8b562de4a4d3"
+      }
+    },
+    
+    owner: "dkay"
+    
   }
 };

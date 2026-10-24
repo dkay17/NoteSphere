@@ -1,69 +1,54 @@
-const { sequelize } = require('../config/database');
-const { User } = require('../models');
-require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+const bcrypt = require('bcryptjs');
+const { getDb } = require('../config/database');
 
-const createAdmin = async () => {
-  try {
-    // Get arguments from command line
-    const args = process.argv.slice(2);
-    
-    if (args.length < 4) {
-      console.log('\n📝 Usage: node createAdmin.js <name> <email> <password> <institution>');
-      console.log('Example: node createAdmin.js "John Doe" john@example.com password123 "University of Ghana"\n');
-      process.exit(1);
-    }
+const createAdmin = async (db) => {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Run create-admin only in a non-production environment');
+  }
 
-    const [name, email, password, institution] = args;
+  const [name, email, password, institution] = process.argv.slice(2);
+  if (!name || !email || !password || !institution) {
+    throw new Error(
+      'Usage: npm run create-admin -- "Name" email password "Institution"',
+    );
+  }
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET must be configured');
+  }
 
-    // Connect to database
-    await sequelize.authenticate();
-    console.log('✅ Database connected');
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ where: { email } });
-    if (existingUser) {
-      console.log(`\n⚠️  User with email ${email} already exists.`);
-      console.log(`Current role: ${existingUser.role}`);
-      
-      // Ask if they want to update to admin (in a real scenario, you'd want input)
-      // For now, let's just update it
-      existingUser.role = 'admin';
-      existingUser.isPremium = true;
-      existingUser.isActive = true;
-      await existingUser.save();
-      
-      console.log('✅ User updated to admin successfully!\n');
-      console.log('📝 Admin Credentials:');
-      console.log(`Email: ${email}`);
-      console.log(`Password: ${password} (or existing password)`);
-      process.exit(0);
-    }
-
-    // Create admin user
-    const admin = await User.create({
-      name,
-      email,
-      password,
-      institution,
-      level: 'Admin',
+  const existingUser = await db.orm.public.User.where({ email }).first();
+  if (existingUser) {
+    await db.orm.public.User.where({ id: existingUser.id }).update({
       role: 'admin',
       isPremium: true,
-      isActive: true
+      isActive: true,
     });
-
-    console.log('\n✅ Admin user created successfully!\n');
-    console.log('📝 Admin Credentials:');
-    console.log(`Name: ${admin.name}`);
-    console.log(`Email: ${admin.email}`);
-    console.log(`Password: ${password}`);
-    console.log(`Institution: ${admin.institution}\n`);
-
-    process.exit(0);
-  } catch (error) {
-    console.error('❌ Error creating admin:', error.message);
-    process.exit(1);
+    console.log('Existing account promoted to admin.');
+    return;
   }
+
+  const admin = await db.orm.public.User.create({
+    name,
+    email,
+    password: await bcrypt.hash(password, 10),
+    institution,
+    level: 'Admin',
+    role: 'admin',
+    isPremium: true,
+    isActive: true,
+  });
+  console.log(`Admin account created: ${admin.email}`);
 };
 
-createAdmin();
-
+(async () => {
+  const db = await getDb();
+  try {
+    await createAdmin(db);
+  } finally {
+    await db.close();
+  }
+})()
+  .catch((error) => {
+    console.error('Unable to create admin:', error);
+    process.exitCode = 1;
+  });
