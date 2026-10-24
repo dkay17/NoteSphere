@@ -14,7 +14,8 @@
     "migration:plan": "prisma migration plan",
     "db:migrate": "prisma db migrate",
     "db:verify": "prisma db verify",
-    "data:import:mysql": "node server/scripts/importMysqlData.js"
+    "data:import:mysql": "node server/scripts/importMysqlData.js",
+    "vercel-build": "cd .. && npm install && npm run contract:emit"
   },
   "keywords": [],
   "author": "",
