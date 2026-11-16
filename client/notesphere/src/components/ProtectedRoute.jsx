@@ -22,7 +22,7 @@ const ProtectedRoute = ({ children, adminOnly = false, premiumOnly = false }) =>
   }
 
   if (premiumOnly && !isPremium) {
-    return <Navigate to="/subscription" replace />;
+    return <Navigate to="/browse" replace />;
   }
 
   return children;

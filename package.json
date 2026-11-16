@@ -4,18 +4,15 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "cd server && npm run dev",
+    "dev": "npm run client",
     "client": "cd client/notesphere && npm start",
-    "install-all": "npm install && cd server && npm install && cd ../client/notesphere && npm install",
-    "contract:emit": "prisma contract emit",
-    "db:init": "prisma db init",
-    "db:update": "prisma db update",
-    "migration:plan": "prisma migration plan",
-    "db:migrate": "prisma db migrate",
-    "db:verify": "prisma db verify",
-    "data:import:mysql": "node server/scripts/importMysqlData.js",
-    "vercel-build": "cd .. && npm install && npm run contract:emit"
+    "install-all": "npm install && cd newServer/notesphere_server && npm install && cd ../../client/notesphere && npm install",
+    "contract:emit": "cd newServer/notesphere_server && npm run contract:emit",
+    "db:init": "cd newServer/notesphere_server && npm run db:init",
+    "db:update": "cd newServer/notesphere_server && npm run db:update",
+    "migration:plan": "cd newServer/notesphere_server && npm run migration:plan",
+    "db:migrate": "cd newServer/notesphere_server && npm run migrate",
+    "db:verify": "cd newServer/notesphere_server && npm run db:verify"
   },
   "keywords": [],
   "author": "",
@@ -30,7 +27,7 @@
   "devDependencies": {
     "@prisma/cli-engine": "^0.7.0",
     "@types/node": "^26.6.5",
-    "prisma": "^8.0.0-rc.23",
+    "prisma": "^8.0.0-rc.33",
     "typescript": "^6.0.3"
   }
 }

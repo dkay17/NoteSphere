@@ -37,6 +37,13 @@ const AdminDashboard = () => {
   };
 
   if (loading) return <Loader fullScreen />;
+  if (!stats) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        Failed to load admin dashboard. Check your API URL and admin access.
+      </div>
+    );
+  }
 
   const statCards = [
     { title: 'Total Users', value: stats?.stats.totalUsers, icon: Users, color: 'bg-blue-500' },

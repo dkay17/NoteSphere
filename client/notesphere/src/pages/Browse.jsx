@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import api from '../utils/api';
 import SearchBar from '../components/SearchBar';
@@ -14,30 +14,35 @@ const Browse = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({});
 
-  useEffect(() => {
-    fetchNotes();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage]);
-
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async (page, term, activeFilters) => {
     setLoading(true);
     try {
-      const params = { page: currentPage, limit: 12, search: searchTerm, ...filters };
+      const params = {
+        page,
+        limit: 12,
+        search: term || undefined,
+        ...activeFilters,
+      };
       const response = await api.get('/notes', { params });
-      setNotes(response.data.notes);
-      setTotalPages(response.data.totalPages);
+      setNotes(response.data.notes || []);
+      setTotalPages(response.data.totalPages || 1);
     } catch (error) {
       console.error('Error fetching notes:', error);
+      setNotes([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchNotes(currentPage, searchTerm, filters);
+  }, [currentPage, searchTerm, filters, fetchNotes]);
 
   const handleSearch = (term, searchFilters) => {
     setSearchTerm(term);
     setFilters(searchFilters);
     setCurrentPage(1);
-    fetchNotes();
   };
 
   return (
@@ -49,7 +54,7 @@ const Browse = () => {
         </motion.div>
 
         <div className="mb-8">
-          <SearchBar onSearch={handleSearch} onFilter={setFilters} />
+          <SearchBar onSearch={handleSearch} onFilter={() => {}} />
         </div>
 
         {loading ? (

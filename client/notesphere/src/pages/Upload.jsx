@@ -20,6 +20,10 @@ const Upload = () => {
       addToast('Please select a file', 'error');
       return;
     }
+    if (file.size > 4 * 1024 * 1024) {
+      addToast('Files must be 4 MB or smaller', 'error');
+      return;
+    }
 
     setLoading(true);
     const data = new FormData();
@@ -27,7 +31,7 @@ const Upload = () => {
     data.append('file', file);
 
     try {
-      await api.post('/notes/upload', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.post('/notes/upload', data);
       addToast('Note uploaded successfully!', 'success');
       navigate('/my-notes');
     } catch (error) {
@@ -85,7 +89,7 @@ const Upload = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">File (PDF/DOCX, Max 10MB) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">File (PDF/DOC/DOCX, Max 4MB) *</label>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors">
                 <FileText className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                 <input type="file" accept=".pdf,.doc,.docx" onChange={(e) => setFile(e.target.files[0])} className="hidden" id="file-upload" />

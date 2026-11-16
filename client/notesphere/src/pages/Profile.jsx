@@ -28,7 +28,7 @@ const Profile = () => {
     e.preventDefault();
     try {
       const response = await api.put('/auth/profile', formData);
-      updateUser(response.data);
+      updateUser({ ...user, ...response.data });
       setEditing(false);
       addToast('Profile updated successfully', 'success');
     } catch (error) {

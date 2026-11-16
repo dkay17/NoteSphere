@@ -94,7 +94,7 @@ const NoteCard = ({ note }) => {
                 {note.lecturer && <span> • {note.lecturer}</span>}
               </div>
               <div className="text-xs text-gray-500">
-                {formatFileSize(note.fileSize)} • {note.fileType.toUpperCase()}
+                {formatFileSize(note.fileSize || 0)} • {(note.fileType || '').toUpperCase()}
               </div>
             </div>
           </div>

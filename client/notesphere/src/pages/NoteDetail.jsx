@@ -40,16 +40,23 @@ const NoteDetail = () => {
 
     try {
       const response = await api.get(`/notes/download/${id}`, { responseType: 'blob' });
+      const contentType = response.headers['content-type'] || '';
+      if (contentType.includes('application/json')) {
+        const text = await response.data.text();
+        const payload = JSON.parse(text);
+        throw new Error(payload.message || 'Download failed');
+      }
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', note.fileName);
+      link.setAttribute('download', note.fileName || 'note');
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
       addToast('Download started!', 'success');
     } catch (error) {
-      addToast(error.response?.data?.message || 'Download failed', 'error');
+      addToast(error.response?.data?.message || error.message || 'Download failed', 'error');
     }
   };
 
@@ -64,7 +71,7 @@ const NoteDetail = () => {
       setNote({ ...note, summary: response.data.summary });
       addToast('Summary generated!', 'success');
     } catch (error) {
-      addToast('Failed to generate summary', 'error');
+      addToast(error.response?.data?.message || 'Failed to generate summary', 'error');
     }
   };
 
@@ -114,7 +121,7 @@ const NoteDetail = () => {
               <p className="text-sm text-gray-600">Rating</p>
               <p className="font-medium flex items-center gap-1">
                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                {note.rating.toFixed(1)}
+                {(note.rating ?? 0).toFixed(1)}
               </p>
             </div>
           </div>

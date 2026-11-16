@@ -18,10 +18,11 @@ const Home = () => {
   const fetchLatestNotes = async () => {
     try {
       const response = await api.get('/notes?limit=6&sortBy=createdAt');
-      setLatestNotes(response.data.notes);
+      const notes = response.data.notes || [];
+      setLatestNotes(notes);
       setStats({
-        totalNotes: response.data.totalNotes,
-        totalDownloads: response.data.notes.reduce((sum, note) => sum + note.downloads, 0),
+        totalNotes: response.data.totalNotes || 0,
+        totalDownloads: notes.reduce((sum, note) => sum + (note.downloads || 0), 0),
       });
     } catch (error) {
       console.error('Error fetching notes:', error);

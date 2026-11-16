@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 10, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/HEARTLESS/Desktop/All%20Desktop%20files/VScode/NoteSphere/newServer/notesphere_server/src/app/page.tsx"],"sourcesContent":["export default function Home() {\n  return (\n    <main className=\"shell\">\n      <div className=\"hero\">\n        <p className=\"eyebrow\">NoteSphere API</p>\n        <h1>Serverless backend is ready.</h1>\n        <p className=\"lede\">\n          API routes are served by Vercel Functions. Check{\" \"}\n          <code>/api/health</code> to confirm the service is available.\n        </p>\n      </div>\n    </main>\n  );\n}\n"],"names":["Home","className"],"mappings":";;;;;;AAAe,SAASA;IACtB,qBACE,gRAAC;QAAKC,WAAU;kBACd,cAAA,gRAAC;YAAIA,WAAU;;8BACb,gRAAC;oBAAEA,WAAU;8BAAU;;;;;;8BACvB,gRAAC;8BAAG;;;;;;8BACJ,gRAAC;oBAAEA,WAAU;;wBAAO;wBAC+B;sCACjD,gRAAC;sCAAK;;;;;;wBAAkB;;;;;;;;;;;;;;;;;;AAKlC"}}]
+}

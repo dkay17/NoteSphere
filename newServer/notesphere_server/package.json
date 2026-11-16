@@ -1,0 +1,57 @@
+{
+  "name": "notesphere_server",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@11.18.0",
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "composer:deploy": "prisma deploy",
+    "composer:dev": "prisma dev",
+    "contract:emit": "prisma contract emit",
+    "db:init": "prisma db init",
+    "db:update": "prisma db update",
+    "db:verify": "prisma db verify",
+    "deploy": "npm run build && npm run composer:deploy",
+    "dev": "next dev",
+    "dev:composer": "npm run build && npm run composer:dev",
+    "lint": "eslint",
+    "migrate": "prisma db migrate",
+    "migration:plan": "prisma migration plan",
+    "migration:show": "prisma migration show",
+    "migration:status": "prisma migration status",
+    "skills:sync": "prisma skills sync || exit 0",
+    "start": "next start",
+    "postinstall": "prisma skills sync || exit 0"
+  },
+  "dependencies": {
+    "@prisma/composer": "0.38.0",
+    "@prisma/composer-prisma-cloud": "0.38.0",
+    "@prisma/orm-postgres": "8.0.0-rc.23",
+    "alchemy": "2.0.0-beta.84",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "temporal-polyfill": "^1.0.6"
+  },
+  "devDependencies": {
+    "@prisma/dev": "0.25.2",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "dotenv": "^18.0.10",
+    "eslint": "^10.13.0",
+    "eslint-config-next": "16.4.2",
+    "prisma": "8.0.0-rc.33",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "effect": "4.0.5",
+    "@effect/platform-bun": "4.0.5",
+    "@effect/platform-node": "4.0.5",
+    "@effect/platform-node-shared": "4.0.5",
+    "@effect/vitest": "4.0.5",
+    "@vitejs/devtools": "0.7.6"
+  }
+}
