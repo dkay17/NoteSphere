@@ -311,24 +311,24 @@ async function getNotes(request: Request): Promise<Response> {
       const term = `%${search}%`;
       filtered = filtered.where((note) =>
         or(
-          note.title.ilike(term),
-          note.course.ilike(term),
-          note.courseCode.ilike(term),
-          note.description.ilike(term),
+          note.title.like(term),
+          note.course.like(term),
+          note.courseCode.like(term),
+          note.description.like(term),
         ),
       );
     }
     if (institution) {
-      filtered = filtered.where((note) => note.institution.ilike(`%${institution}%`));
+      filtered = filtered.where((note) => note.institution.like(`%${institution}%`));
     }
     if (course) {
-      filtered = filtered.where((note) => note.course.ilike(`%${course}%`));
+      filtered = filtered.where((note) => note.course.like(`%${course}%`));
     }
     if (lecturer) {
-      filtered = filtered.where((note) => note.lecturer.ilike(`%${lecturer}%`));
+      filtered = filtered.where((note) => note.lecturer.like(`%${lecturer}%`));
     }
     if (tags) {
-      filtered = filtered.where((note) => note.tags.ilike(`%${tags}%`));
+      filtered = filtered.where((note) => note.tags.like(`%${tags}%`));
     }
 
     const totals = await filtered.aggregate((aggregate) => ({
@@ -790,9 +790,9 @@ async function getAllUsers(request: Request): Promise<Response> {
       const term = `%${search}%`;
       filtered = filtered.where((user) =>
         or(
-          user.name.ilike(term),
-          user.email.ilike(term),
-          user.institution.ilike(term),
+          user.name.like(term),
+          user.email.like(term),
+          user.institution.like(term),
         ),
       );
     }
@@ -911,7 +911,8 @@ async function verifyNote(request: Request, value: string): Promise<Response> {
   const id = parseUuid(value);
   if (!id) throw new ApiError(400, "Invalid note ID");
   const body = await readJson(request);
-  if (typeof body.verified !== "boolean") {
+  const verified = body.verified;
+  if (typeof verified !== "boolean") {
     throw new ApiError(400, "verified must be a boolean");
   }
 
@@ -921,10 +922,10 @@ async function verifyNote(request: Request, value: string): Promise<Response> {
     const note = await database.orm.public.Note
       .where({ id })
       .select("id", "title", "verified")
-      .update({ verified: body.verified });
+      .update({ verified});
     if (!note) throw new ApiError(404, "Note not found");
     return Response.json({
-      message: `Note ${body.verified ? "verified" : "unverified"} successfully`,
+      message: `Note ${verified ? "verified" : "unverified"} successfully`,
       note,
     });
   });
