@@ -1,0 +1,754 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.DownloadLogs",
+    "label": "Create table \"DownloadLogs\"",
+    "summary": "Creates table \"DownloadLogs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "DownloadLogs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"DownloadLogs\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"DownloadLogs\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"DownloadLogs\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"DownloadLogs\"",
+        "sql": "CREATE TABLE \"public\".\"DownloadLogs\" (\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"downloadDate\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"ipAddress\" text,\n  \"noteId\" uuid NOT NULL,\n  \"updatedAt\" timestamptz(3) NOT NULL,\n  \"userId\" uuid NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"DownloadLogs\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"DownloadLogs\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"DownloadLogs\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.Notes",
+    "label": "Create table \"Notes\"",
+    "summary": "Creates table \"Notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Notes\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Notes\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"Notes\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Notes\"",
+        "sql": "CREATE TABLE \"public\".\"Notes\" (\n  \"course\" text NOT NULL,\n  \"courseCode\" text,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"downloads\" int4 DEFAULT 0 NOT NULL,\n  \"fileData\" bytea,\n  \"fileName\" text NOT NULL,\n  \"fileSize\" int4 NOT NULL,\n  \"fileType\" text NOT NULL,\n  \"fileUrl\" text,\n  \"id\" uuid NOT NULL,\n  \"institution\" text NOT NULL,\n  \"lecturer\" text,\n  \"rating\" float8 DEFAULT 0 NOT NULL,\n  \"ratingCount\" int4 DEFAULT 0 NOT NULL,\n  \"summary\" text,\n  \"tags\" text,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz(3) NOT NULL,\n  \"uploaderId\" uuid NOT NULL,\n  \"verified\" bool DEFAULT false NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Notes\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"Notes\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"Notes\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "table.Users",
+    "label": "Create table \"Users\"",
+    "summary": "Creates table \"Users\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "Users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"Users\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Users\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "table \"Users\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"Users\"",
+        "sql": "CREATE TABLE \"public\".\"Users\" (\n  \"bio\" text,\n  \"createdAt\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"email\" text NOT NULL,\n  \"id\" uuid NOT NULL,\n  \"institution\" text NOT NULL,\n  \"isActive\" bool DEFAULT true NOT NULL,\n  \"isPremium\" bool DEFAULT false NOT NULL,\n  \"lastDownloadReset\" timestamptz(3) DEFAULT (now()) NOT NULL,\n  \"level\" text NOT NULL,\n  \"name\" text NOT NULL,\n  \"password\" text NOT NULL,\n  \"role\" text DEFAULT 'student' NOT NULL,\n  \"subscriptionExpiry\" timestamptz(3),\n  \"updatedAt\" timestamptz(3) NOT NULL,\n  \"weeklyDownloads\" int4 DEFAULT 0 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"Users\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3))) AS \"result\"",
+        "params": [
+          "\"public\".\"Users\"",
+          "r",
+          "p"
+        ],
+        "expectation": {
+          "expects": "present",
+          "object": "table \"Users\""
+        }
+      }
+    ]
+  },
+  {
+    "id": "unique.Users.Users_email_key",
+    "label": "Add unique constraint on \"Users\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "Users_email_key",
+        "table": "Users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"Users_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Users_email_key",
+          "public",
+          "\"public\".\"Users\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "constraint \"Users_email_key\" on \"Users\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"Users_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"Users\" ADD CONSTRAINT \"Users_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify unique constraint \"Users_email_key\" exists on (email)",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb)) AS \"result\"",
+        "params": [
+          "Users_email_key",
+          "public",
+          "\"public\".\"Users\"",
+          "u",
+          "[\"email\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.DownloadLogs.DownloadLogs_downloadDate_idx_990acc69",
+    "label": "Create index \"DownloadLogs_downloadDate_idx_990acc69\" on \"DownloadLogs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "DownloadLogs_downloadDate_idx_990acc69",
+        "table": "DownloadLogs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"DownloadLogs_downloadDate_idx_990acc69\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"DownloadLogs_downloadDate_idx_990acc69\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"DownloadLogs_downloadDate_idx_990acc69\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"DownloadLogs_downloadDate_idx_990acc69\"",
+        "sql": "CREATE INDEX \"DownloadLogs_downloadDate_idx_990acc69\" ON \"public\".\"DownloadLogs\" (\"downloadDate\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"DownloadLogs_downloadDate_idx_990acc69\" exists on \"DownloadLogs\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"DownloadLogs_downloadDate_idx_990acc69\"",
+          "i",
+          "I",
+          "\"public\".\"DownloadLogs\"",
+          "btree",
+          "[\"downloadDate\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.DownloadLogs.DownloadLogs_noteId_idx_0612c5b1",
+    "label": "Create index \"DownloadLogs_noteId_idx_0612c5b1\" on \"DownloadLogs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "DownloadLogs_noteId_idx_0612c5b1",
+        "table": "DownloadLogs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"DownloadLogs_noteId_idx_0612c5b1\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"DownloadLogs_noteId_idx_0612c5b1\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"DownloadLogs_noteId_idx_0612c5b1\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"DownloadLogs_noteId_idx_0612c5b1\"",
+        "sql": "CREATE INDEX \"DownloadLogs_noteId_idx_0612c5b1\" ON \"public\".\"DownloadLogs\" (\"noteId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"DownloadLogs_noteId_idx_0612c5b1\" exists on \"DownloadLogs\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"DownloadLogs_noteId_idx_0612c5b1\"",
+          "i",
+          "I",
+          "\"public\".\"DownloadLogs\"",
+          "btree",
+          "[\"noteId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.DownloadLogs.DownloadLogs_userId_idx_a489d58a",
+    "label": "Create index \"DownloadLogs_userId_idx_a489d58a\" on \"DownloadLogs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "DownloadLogs_userId_idx_a489d58a",
+        "table": "DownloadLogs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"DownloadLogs_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"DownloadLogs_userId_idx_a489d58a\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"DownloadLogs_userId_idx_a489d58a\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"DownloadLogs_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"DownloadLogs_userId_idx_a489d58a\" ON \"public\".\"DownloadLogs\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"DownloadLogs_userId_idx_a489d58a\" exists on \"DownloadLogs\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"DownloadLogs_userId_idx_a489d58a\"",
+          "i",
+          "I",
+          "\"public\".\"DownloadLogs\"",
+          "btree",
+          "[\"userId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Notes.Notes_createdAt_idx_9575dbd7",
+    "label": "Create index \"Notes_createdAt_idx_9575dbd7\" on \"Notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Notes_createdAt_idx_9575dbd7",
+        "table": "Notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Notes_createdAt_idx_9575dbd7\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Notes_createdAt_idx_9575dbd7\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Notes_createdAt_idx_9575dbd7\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Notes_createdAt_idx_9575dbd7\"",
+        "sql": "CREATE INDEX \"Notes_createdAt_idx_9575dbd7\" ON \"public\".\"Notes\" (\"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Notes_createdAt_idx_9575dbd7\" exists on \"Notes\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Notes_createdAt_idx_9575dbd7\"",
+          "i",
+          "I",
+          "\"public\".\"Notes\"",
+          "btree",
+          "[\"createdAt\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Notes.Notes_institution_idx_c297f7e7",
+    "label": "Create index \"Notes_institution_idx_c297f7e7\" on \"Notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Notes_institution_idx_c297f7e7",
+        "table": "Notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Notes_institution_idx_c297f7e7\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Notes_institution_idx_c297f7e7\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Notes_institution_idx_c297f7e7\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Notes_institution_idx_c297f7e7\"",
+        "sql": "CREATE INDEX \"Notes_institution_idx_c297f7e7\" ON \"public\".\"Notes\" (\"institution\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Notes_institution_idx_c297f7e7\" exists on \"Notes\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Notes_institution_idx_c297f7e7\"",
+          "i",
+          "I",
+          "\"public\".\"Notes\"",
+          "btree",
+          "[\"institution\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Notes.Notes_uploaderId_idx_debae170",
+    "label": "Create index \"Notes_uploaderId_idx_debae170\" on \"Notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Notes_uploaderId_idx_debae170",
+        "table": "Notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Notes_uploaderId_idx_debae170\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Notes_uploaderId_idx_debae170\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Notes_uploaderId_idx_debae170\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Notes_uploaderId_idx_debae170\"",
+        "sql": "CREATE INDEX \"Notes_uploaderId_idx_debae170\" ON \"public\".\"Notes\" (\"uploaderId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Notes_uploaderId_idx_debae170\" exists on \"Notes\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Notes_uploaderId_idx_debae170\"",
+          "i",
+          "I",
+          "\"public\".\"Notes\"",
+          "btree",
+          "[\"uploaderId\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Users.Users_institution_idx_c297f7e7",
+    "label": "Create index \"Users_institution_idx_c297f7e7\" on \"Users\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Users_institution_idx_c297f7e7",
+        "table": "Users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Users_institution_idx_c297f7e7\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Users_institution_idx_c297f7e7\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Users_institution_idx_c297f7e7\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Users_institution_idx_c297f7e7\"",
+        "sql": "CREATE INDEX \"Users_institution_idx_c297f7e7\" ON \"public\".\"Users\" (\"institution\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Users_institution_idx_c297f7e7\" exists on \"Users\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Users_institution_idx_c297f7e7\"",
+          "i",
+          "I",
+          "\"public\".\"Users\"",
+          "btree",
+          "[\"institution\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.Users.Users_role_idx_2c1ddf83",
+    "label": "Create index \"Users_role_idx_2c1ddf83\" on \"Users\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "Users_role_idx_2c1ddf83",
+        "table": "Users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"Users_role_idx_2c1ddf83\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"Users_role_idx_2c1ddf83\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "index \"Users_role_idx_2c1ddf83\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"Users_role_idx_2c1ddf83\"",
+        "sql": "CREATE INDEX \"Users_role_idx_2c1ddf83\" ON \"public\".\"Users\" (\"role\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"Users_role_idx_2c1ddf83\" exists on \"Users\" with the planned definition",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_class\" AS \"c\" INNER JOIN \"pg_index\" AS \"i\" ON \"i\".\"indexrelid\" = \"c\".\"oid\" INNER JOIN \"pg_am\" AS \"m\" ON \"m\".\"oid\" = \"c\".\"relam\" WHERE (\"c\".\"oid\" = to_regclass($1) AND (\"c\".\"relkind\" = $2 OR \"c\".\"relkind\" = $3) AND \"i\".\"indrelid\" = to_regclass($4) AND NOT (\"i\".\"indisunique\") AND \"m\".\"amname\" = $5 AND (\"i\".\"indexprs\" IS NULL AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"i\".\"indkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"i\".\"indrelid\" AND key_attribute.attnum = key_column.attnum) = ($6)::jsonb) AND \"i\".\"indpred\" IS NULL)) AS \"result\"",
+        "params": [
+          "\"public\".\"Users_role_idx_2c1ddf83\"",
+          "i",
+          "I",
+          "\"public\".\"Users\"",
+          "btree",
+          "[\"role\"]"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.DownloadLogs.DownloadLogs_userId_fkey",
+    "label": "Add foreign key \"DownloadLogs_userId_fkey\" on \"DownloadLogs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "DownloadLogs_userId_fkey",
+        "table": "DownloadLogs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"DownloadLogs_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "DownloadLogs_userId_fkey",
+          "public",
+          "\"public\".\"DownloadLogs\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"DownloadLogs_userId_fkey\" on \"DownloadLogs\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"DownloadLogs_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"DownloadLogs\"\nADD CONSTRAINT \"DownloadLogs_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"Users\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"DownloadLogs_userId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "DownloadLogs_userId_fkey",
+          "public",
+          "\"public\".\"DownloadLogs\"",
+          "f",
+          "[\"userId\"]",
+          "\"public\".\"Users\"",
+          "[\"id\"]",
+          "c",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.DownloadLogs.DownloadLogs_noteId_fkey",
+    "label": "Add foreign key \"DownloadLogs_noteId_fkey\" on \"DownloadLogs\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "DownloadLogs_noteId_fkey",
+        "table": "DownloadLogs"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"DownloadLogs_noteId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "DownloadLogs_noteId_fkey",
+          "public",
+          "\"public\".\"DownloadLogs\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"DownloadLogs_noteId_fkey\" on \"DownloadLogs\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"DownloadLogs_noteId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"DownloadLogs\"\nADD CONSTRAINT \"DownloadLogs_noteId_fkey\"\nFOREIGN KEY (\"noteId\")\nREFERENCES \"public\".\"Notes\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"DownloadLogs_noteId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "DownloadLogs_noteId_fkey",
+          "public",
+          "\"public\".\"DownloadLogs\"",
+          "f",
+          "[\"noteId\"]",
+          "\"public\".\"Notes\"",
+          "[\"id\"]",
+          "c",
+          "a"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.Notes.Notes_uploaderId_fkey",
+    "label": "Add foreign key \"Notes_uploaderId_fkey\" on \"Notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "Notes_uploaderId_fkey",
+        "table": "Notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"Notes_uploaderId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "Notes_uploaderId_fkey",
+          "public",
+          "\"public\".\"Notes\""
+        ],
+        "expectation": {
+          "expects": "absent",
+          "object": "FK \"Notes_uploaderId_fkey\" on \"Notes\""
+        }
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"Notes_uploaderId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"Notes\"\nADD CONSTRAINT \"Notes_uploaderId_fkey\"\nFOREIGN KEY (\"uploaderId\")\nREFERENCES \"public\".\"Users\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"Notes_uploaderId_fkey\" exists with the planned columns, referenced table and actions",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3) AND \"c\".\"contype\" = $4 AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"conkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"conrelid\" AND key_attribute.attnum = key_column.attnum) = ($5)::jsonb AND \"c\".\"confrelid\" = to_regclass($6) AND (SELECT coalesce(jsonb_agg(key_attribute.attname ORDER BY key_column.position), '[]'::jsonb) FROM unnest(\"c\".\"confkey\"::int2[]) WITH ORDINALITY AS key_column(attnum, position) JOIN pg_attribute key_attribute ON key_attribute.attrelid = \"c\".\"confrelid\" AND key_attribute.attnum = key_column.attnum) = ($7)::jsonb AND \"c\".\"confdeltype\" = $8 AND \"c\".\"confupdtype\" = $9)) AS \"result\"",
+        "params": [
+          "Notes_uploaderId_fkey",
+          "public",
+          "\"public\".\"Notes\"",
+          "f",
+          "[\"uploaderId\"]",
+          "\"public\".\"Users\"",
+          "[\"id\"]",
+          "c",
+          "a"
+        ]
+      }
+    ]
+  }
+]
